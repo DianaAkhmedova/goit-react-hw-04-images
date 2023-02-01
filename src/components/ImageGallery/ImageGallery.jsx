@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 
 import ImageGalleryItem from './ImageGalleryItem/ImageGalleryItem';
 import Button from './Button/Button';
-import Loader from 'components/ImageGallery/Loader/Loader';
+import Loader from 'shared/components/Loader/Loader';
 
 import styles from './imageGallery.module.css';
 
@@ -24,7 +24,7 @@ const ImageGallery = ({ images, error, loading, loadMore, showLargeImage }) => {
       {error && <p>{error}</p>}
       <ul className={styles.ImageGallery}>{galleryItem}</ul>
       {loading && <Loader />}
-      {Boolean(images.length) && <Button loadMore={loadMore} />}
+      {!loading && Boolean(images.length) && <Button loadMore={loadMore} />}
     </>
   );
 };

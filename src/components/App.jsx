@@ -2,7 +2,8 @@ import { Component } from 'react';
 
 import Searchbar from './Searchbar/Searchbar';
 import ImageGallery from './ImageGallery/ImageGallery';
-import Modal from 'shared/services/components/Modal/Modal';
+import Loader from 'shared/components/Loader/Loader';
+import Modal from 'shared/components/Modal/Modal';
 
 import { searchImg } from 'shared/services/gallery-api';
 
@@ -64,6 +65,8 @@ class App extends Component {
     return (
       <div className={styles.App}>
         <Searchbar handleSearchFormSubmit={handleSearchFormSubmit} />
+        {!Boolean(images.length) && loading && <Loader />}
+
         {Boolean(images.length) && (
           <ImageGallery
             searchName={searchName}
