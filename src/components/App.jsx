@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 
 import Searchbar from './Searchbar/Searchbar';
 import ImageGallery from './ImageGallery/ImageGallery';
@@ -9,87 +9,80 @@ import { searchImg } from 'shared/services/gallery-api';
 
 import styles from './app.module.css';
 
-class App extends Component {
-  state = {
-    searchName: '',
-    images: [],
-    loading: false,
-    error: '',
-    page: 1,
-    showModal: false,
-    modalImg: null,
-  };
+const App = () => {
+  const [searchName, setSearchName] = useState('');
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [showModal, setShowModal] = useState(false);
+  const [modalImg, setModalImg] = useState(null);
 
-  componentDidUpdate(prevProps, prevState) {
-    const { searchName, page } = this.state;
-    if (prevState.searchName !== searchName || prevState.page !== page) {
-      this.fetchGallery();
+  useEffect(() => {
+    if (!searchName) {
+      return;
     }
-  }
+    const fetchGallery = async () => {
+      try {
+        setLoading(true);
+        const { hits } = await searchImg(searchName, page);
+        setImages(prevImages => [...prevImages, ...hits]);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchGallery();
+  }, [searchName, page]);
 
-  async fetchGallery() {
-    try {
-      this.setState({ loading: true });
-      const { searchName, page } = this.state;
-      const { hits } = await searchImg(searchName, page);
-      this.setState(({ images }) => ({ images: [...images, ...hits] }));
-    } catch (error) {
-      this.setState({ error: error.message });
-    } finally {
-      this.setState({ loading: false });
-    }
-  }
-
-  handleSearchFormSubmit = searchName => {
-    this.setState({ searchName, images: [], page: 1 });
+  const handleSearchFormSubmit = searchName => {
+    setSearchName(searchName);
+    setImages([]);
+    setPage(1);
   };
 
-  loadMore = () => {
-    this.setState(({ page }) => ({ page: page + 1 }));
+  const loadMore = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  showLargeImage = (largeImage, tags) => {
-    this.setState({ showModal: true, modalImg: { largeImage, tags } });
+  const showLargeImage = (largeImage, tags) => {
+    setShowModal(true);
+    setModalImg({ largeImage, tags });
   };
 
-  closeModal = () => {
-    this.setState({ showModal: false, modalImg: null });
+  const closeModal = () => {
+    setShowModal(false);
+    setModalImg(null);
   };
 
-  render() {
-    const { searchName, images, loading, error, showModal, modalImg } =
-      this.state;
-    const { handleSearchFormSubmit, loadMore, showLargeImage, closeModal } =
-      this;
+  return (
+    <div className={styles.App}>
+      <Searchbar handleSearchFormSubmit={handleSearchFormSubmit} />
+      {!Boolean(images.length) && loading && <Loader />}
 
-    return (
-      <div className={styles.App}>
-        <Searchbar handleSearchFormSubmit={handleSearchFormSubmit} />
-        {!Boolean(images.length) && loading && <Loader />}
-
-        {Boolean(images.length) && (
-          <ImageGallery
-            searchName={searchName}
-            images={images}
-            error={error}
-            loading={loading}
-            loadMore={loadMore}
-            showLargeImage={showLargeImage}
+      {Boolean(images.length) && (
+        <ImageGallery
+          searchName={searchName}
+          images={images}
+          error={error}
+          loading={loading}
+          loadMore={loadMore}
+          showLargeImage={showLargeImage}
+        />
+      )}
+      {showModal && (
+        <Modal close={closeModal}>
+          <img
+            src={modalImg.largeImage}
+            alt={modalImg.tags}
+            width="800"
+            height="600"
           />
-        )}
-        {showModal && (
-          <Modal close={closeModal}>
-            <img
-              src={modalImg.largeImage}
-              alt={modalImg.tags}
-              width="800"
-              height="600"
-            />
-          </Modal>
-        )}
-      </div>
-    );
-  }
-}
+        </Modal>
+      )}
+    </div>
+  );
+};
 
 export default App;
